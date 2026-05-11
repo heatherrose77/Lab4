@@ -1,7 +1,7 @@
 import arcpy
 import pandas as pd
 import matplotlib.pyplot as plt
-import Lab4_functions as l4
+import hm_lab4_functions as l4
 import importlib
 
 
@@ -24,7 +24,7 @@ import importlib
 #   
 # Set the workspace to point to the geodatabase you are using for this lab
 
-arcpy.env.workspace = r"R:\2025\Spring\GEOG562\Instructors\kennedy_2025\Lab4\Lab4_arcproject_REK\Lab4_arcproject_REK.gdb" 
+arcpy.env.workspace = r"R:\2026\Spring\GEOG562\Students\maranh\Lab4\lab4_arcproject_hm\lab4_arcproject_hm.gdb" 
 
 ############################################################################
 # Block 3:  We are going to work with the notion of extending raster objects
@@ -47,7 +47,8 @@ print(r.metadata["bounds"])
 #  Why do we need to use the "super()" function in the definition of the SmartRaster?
 
 # Your answer:
-
+# The super() function is a critical step in the function code for the class SmartRaster which makes sure that
+# all of the methods from the parent class of SmartRaster are being copied over. 
 
 
 
@@ -86,6 +87,7 @@ if okay:
 else:
     print("NDVI calculation failed.")
 
+
 # Question 4.1 
 #  In the "calculate_ndvi", the method accepts 
 #    two arguments to define which band indices
@@ -93,7 +95,9 @@ else:
 #    set them here -- why did it work?
 
 #  Your answer:
-
+# It worked because we defined which band indices were relevant (band 4 and 3) in the function code where we
+# added the new method to calculate NDVI in the SmartRaster class. In the inputs to the calculate_ndvi function
+# we set band4_index = 4 & band3_index = 3, which is why we don't need to set it here. 
 
 
 
@@ -119,7 +123,7 @@ else:
 #     the NDVI image we just created into a new
 #     field called mean_ndvi
 
-
+r = l4.SmartRaster("Landsat_image_corv")
 importlib.reload(l4)
 fc = "Corvallis_parcels" # remember you should have copied this into your workspace in Block 2.
 
@@ -128,8 +132,9 @@ smart_vector = l4.SmartVectorLayer(fc)
 
 # then get the zonal stats using the mean value
 smart_vector.zonal_stats_to_field(out_ndvi_file, output_field = "NDVI_mean")
+print([f.name for f in arcpy.ListFields(smart_vector.feature_class)])
 
-# then save it as a new feature class!
+# # then save it as a new feature class!
 smart_vector.save_as("Corvallis_parcels_plusNDVI")
 
 
@@ -142,10 +147,14 @@ smart_vector.save_as("Corvallis_parcels_plusNDVI")
 # 
 
 #Your answer
-
-
-
-
+# Genrally, it looks like the zonal stats for NDVI worked reasonably. I was most able to make out the genral 
+# areas that had very high or veery low NDVI values to compare to my output corvallis_parcel_meanNDVi dataset.
+# In areas where there are houses, there is very low NDVI, and areas with parks or fields there is higher NDVI.
+# I noticed that since we are averaging NDVI over an entire parcel, it will overestimate the actual NDVI in that area.
+# For example, if there is a park in the center of a parcel, it will say that most of the surroundign streets are also 
+# high NDVI, which we no is not true based on the basemap as well as the resulting NDVi raster. 
+# One thing that happened to me, and also another student, was that we had missing data in our output dataset. 
+# There were some parcels that were removed from the dataset, which we weren't able to full resolve. 
 
 
 # Block 6: 
@@ -158,7 +167,10 @@ smart_vector.save_as("Corvallis_parcels_plusNDVI")
 #  and add the small chunk of code I have asked you
 #  to do.  Most of the functionality is already there
 
+importlib.reload(l4)
 
+smart_vector = l4.SmartVectorLayer(fc)
+print(smart_vector)
 okay, df = smart_vector.extract_to_pandas_df()
 
 
@@ -169,7 +181,10 @@ okay, df = smart_vector.extract_to_pandas_df()
 #   code?  
 
 # Your answer
-
+# I am guessing that we defined fields=None because we are assuming that the user is not going
+# to pass specific field names to the function. Instead, if we use fields=None, then the code
+# is going to run through all of the fields if the user did not pass any to the function.
+# In the code, you used it as a parameter in the extract_to_pandas function. 
 
 
 
@@ -205,7 +220,11 @@ sp.scatterplot(x_field, y_field, x_min=1901, x_max = 2030)
 
 
 # Your answer:
-
+# df_to_plot is itself, aka our entire dataframe object i.e. out dataset. By setting this variable as self, it means
+# that the code is going to run through the entire dataframe and iterate through some if statements. This line of code
+# is basically going through each item in the dataframe and filtering it based on the given parameters, and masking it.
+# In this line of code, we are filtering the dataframe data in the x_field, seeing if it is >= x_min, and if it is,
+# we mask it to the df_to_plot. This is helping us select the filtered data that we want so we can plot it accordingly. 
 
 
 
@@ -238,15 +257,19 @@ sp.scatterplot(x_field, y_field, x_min=1901, x_max = 2030)
 #   Here, and you have the name of the file for the control file
 #  Below, simply call the "plot_from_file" method to run the .csv fil
 
-param_file = 'params_1.csv'  #  this assumes you've placed in the 
-                            # python code directory you're working in here. 
-# Your code:
+importlib.reload(l4)
 
+sp = l4.smartPanda(df)
 
-
-#  My code
-
+param_file = r"R:\2026\Spring\GEOG562\Students\maranh\Lab4\PythonCode\params_1.csv"
 ok = sp.plot_from_file(param_file)
+
+if ok:
+    print("Done plotting")
+
+param_file2 = r"R:\2026\Spring\GEOG562\Students\maranh\Lab4\PythonCode\params_2.csv"
+ok = sp.plot_from_file(param_file2)
+
 if ok:
     print("Done plotting")
 
@@ -275,6 +298,7 @@ if ok:
 #  In your lab document, paste in a couple of the
 #    examples of the output .png files. 
 
+# Pasted! 
 
 
 # Question 8.3
